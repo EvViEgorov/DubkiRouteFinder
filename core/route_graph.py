@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 
 # маршрутная сеть в виде графа
@@ -12,19 +13,19 @@ class RouteNetwork:
         self.nodes = []
         self.edges = {}
 
-        # записываем все узлы
+        # записываем из файла все узлы
         for n in data["nodes"]:
             self.nodes.append(n)
+            # для каждого узла сразу создаем список потенциальных ребер
             self.edges[n[0]] = []
-        # записываем все ребра
+        # записываем из файла все рёбра
         for e in data["connections"]:
             start, end, time = e
-            # пишем ребро в массив рёбер для каждой вершины
             self.edges[start].append((end, time))
             self.edges[end].append((start, time))
 
     # ТУТ ПРОПИСАТЬ АЛГОРИТМ ДЕЙКСТРЫ
-    def get_fastest(self, start, end):
+    def get_fastest(self, start, end, cur_time):
         return 31 # ВРЕМЕННО
 
     # ТУТ ПРОПИСАТЬ ВОЗВРАТНЫЙ ПОИСК В ГЛУБИНУ ВСЕХ ВОЗМОЖНЫХ
