@@ -170,7 +170,7 @@ class RouteNetwork:
         visited = {start}  # start уже посещен
         path = [start]  # путь начинается со start
 
-        # поиск в грубину от начальной вершины
+        # поиск в глубину от начальной вершины
         dfs(start, visited, path, 0)
 
         return all_routes # возвращаем все найденные маршруты
