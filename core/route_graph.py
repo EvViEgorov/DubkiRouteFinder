@@ -1,4 +1,5 @@
 import json
+from calendar import weekday
 from datetime import datetime, timedelta
 
 
@@ -56,12 +57,28 @@ class RouteNetwork:
 
             # Ищем дельту
             wait = dep_mins - cur_mins
-            # Выбираем первый маршрут с неотрицательной дельтой (раписание и так сортированное)
+            # Выбираем первый маршрут с неотрицательной дельтой (расписание и так сортированное)
             if wait >= 0:
                 return wait
 
         # Если не нашлось рейсов в этот день, то смотрим завтра
-        return float('inf')
+        time_till_midnight = 24 * 60 - cur_mins
+
+        # Смотрим завтрашний день недели
+        next_weekday = (cur_time.weekday() + 1) % 7
+        next_day_type = "weekday" if next_weekday < 6 else "weekend"
+        next_schedule_list = self.schedules[leg_key].get(next_day_type, [])
+        if not next_schedule_list:
+            return float('inf')
+
+        # из завтрашних подойдет самый первый рейс
+        first_tomorrow_time = next_schedule_list[0]
+        h, m = map(int, first_tomorrow_time.split(':'))
+        first_tomorrow_mins = h * 60 + m
+
+        # плюсуем время первого автобуса со вчерашним остатком времени
+        wait = time_till_midnight + first_tomorrow_mins
+        return wait
 
     # АЛГОРИТМ ДЕЙКСТРЫ
     def get_fastest(
@@ -148,8 +165,9 @@ class RouteNetwork:
 
             # базовый случай: дошли до конечной вершины
             if current == end:
+                path_names = [self.nodes[pid] for pid in path]
                 # cохраняем копию пути
-                all_routes.append((path.copy(), total_time.strftime("%d.%m %H:%M:%S")))
+                all_routes.append((path_names, total_time.strftime("%d.%m %H:%M")))
                 return  # возвращаемся, чтобы найти другие маршруты
 
             # перебираем соседей: смотрим все возможные направления из текущей вершины
@@ -160,12 +178,20 @@ class RouteNetwork:
 
                     # переводим время в timedelta
                     delta = timedelta(minutes=delta)
-                    wait_mins = self.schedule_wait_time(total_time, path[-1], neighbor)
+                    wait_mins = self.schedule_wait_time(total_time, current, neighbor)
+
+                    # Если путь уже занимает бесконечно времени - не записываем его
+                    if wait_mins == float('inf'):
+                        path.pop()
+                        visited.remove(neighbor)
+                        continue
+
                     wait_time = timedelta(minutes=wait_mins)
+                    new_time = total_time + wait_time + delta
 
                     # реккурсивное: идем глубже
                     # передаем total_time + time (добавляем время этого перегона)
-                    dfs(neighbor, visited, path, total_time + wait_time + delta)
+                    dfs(neighbor, visited, path, new_time)
 
                     # убираем вершину из пути и посещенных => пробовать другие маршруты
                     path.pop()  # убираем последнюю вершину из пути
