@@ -101,5 +101,42 @@ class RouteNetwork:
         }
 
     # ТУТ ПРОПИСАТЬ ВОЗВРАТНЫЙ ПОИСК В ГЛУБИНУ ВСЕХ ВОЗМОЖНЫХ
-    def get_all_routes(self, start, end):
-        pass
+    def get_all_routes(self, start, end, departure_time):
+
+        all_routes = [] # Сюда будем собирать все найденные маршруты
+
+        def dfs(current, visited, path, total_time):
+            # поиск в глубину обход графа в глубину
+            # current: текущая вершина
+            # visited: множество уже посещенных вершин (чтобы не ходить кругами)
+            # path: текущий путь от start до current
+            # total_time: суммарное время, потраченное на текущий путь
+
+            # базовый случай: дошли до конечной вершины
+            if current == end:
+                # cохраняем копию пути
+                all_routes.append((path.copy(), total_time))
+                return  # возвращаемся, чтобы найти другие маршруты
+
+            # перебираем соседей: смотрим все возможные направления из текущей вершины
+            for neighbor, time in self.edges[current]:
+                if neighbor not in visited: # проверяем, не были ли уже в этой вершине на текущем пути
+                    visited.add(neighbor) # отмечаем вершину как посещенную
+                    path.append(neighbor) # добавляем в путь
+
+                    # реккурсивное: идем глубже
+                    # передаем total_time + time (добавляем время этого перегона)
+                    dfs(neighbor, visited, path, total_time + time)
+
+                    # убираем вершину из пути и посещенных => пробовать другие маршруты
+                    path.pop()  # убираем последнюю вершину из пути
+                    visited.remove(neighbor)  # разотмечаем как посещенную
+
+        # начальные условия для старта поиска
+        visited = {start}  # start уже посещен
+        path = [start]  # путь начинается со start
+
+        # поиск в грубину от начальной вершины
+        dfs(start, visited, path, 0)
+
+        return all_routes # возвращаем все найденные маршруты
