@@ -1,5 +1,6 @@
 # ТЕСТОВЫЙ ФАЙЛ
 from pathlib import Path
+from datetime import datetime
 
 from core.route_graph import RouteNetwork
 
@@ -13,7 +14,7 @@ DATA_PATH = BASE_DIR / "data" / "connections_data.json"
 def test_find_route():
     # создаем объект класса
     G = RouteNetwork(DATA_PATH)
-    print(G.nodes)
+    print(G.get_fastest(0, 3, datetime.now()))
 
 
 print(test_find_route())
