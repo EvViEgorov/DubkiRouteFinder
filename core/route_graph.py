@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 # маршрутная сеть в виде графа
 class RouteNetwork:
-    def __init__(self, datafile):
+    def __init__(self, datafile, schedulefile):
         # читаем файл с информацией
         with open(datafile, 'r', encoding='UTF-8') as f:
             data = json.load(f)
@@ -24,10 +24,44 @@ class RouteNetwork:
             self.edges[start].append((end, time))
             self.edges[end].append((start, time))
 
+        # подгружаем расписание
+        with open(schedulefile, 'r', encoding='UTF-8') as f:
+            schedule_data = json.load(f)
+
+        self.schedules = schedule_data
+
     # Определение времени ожидания транспорта (если есть расписание)
     def schedule_wait_time(self, cur_time, leg_start, leg_end):
-        # если нет раписания - возвращаем default = 0 (например для leg'ов пешкоым)
-        return 0
+        # ключ для поиска по словарям
+        leg_key = "-".join([str(leg_start), str(leg_end)])
+
+        # если нет раcписания - возвращаем default = 0 (например для leg'ов пешком)
+        if leg_key not in self.schedules:
+            return 0
+
+        # берем расписание для нужного дня недели
+        day_type = "weekday" if cur_time.weekday() < 6 else "weekend"
+        schedule_list = self.schedules[leg_key].get(day_type, [])
+        if not schedule_list: # если его нет - возвращаем 0
+            return 0
+
+        # текущее время переводим в минуты для удобного сравнения
+        cur_mins = cur_time.hour * 60 + cur_time.minute
+
+        # инициализируем время ожидания
+        wait = 0
+        for time_str in schedule_list:
+            # Строку переводим в минуты для удобного сравнения
+            h, m = map(int, time_str.split(':'))
+            dep_mins = h * 60 + m
+
+            # Ищем дельту
+            wait = dep_mins - cur_mins
+            # Выбираем первый маршрут с неотрицательной дельтой (раписание и так сортированное)
+            if wait >= 0:
+                break
+
+        return wait
 
     # АЛГОРИТМ ДЕЙКСТРЫ
     def get_fastest(
