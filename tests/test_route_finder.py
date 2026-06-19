@@ -14,7 +14,7 @@ DATA_PATH = BASE_DIR / "data" / "connections_data.json"
 def test_find_route():
     # создаем объект класса
     G = RouteNetwork(DATA_PATH)
-    print(G.get_fastest(0, 3, datetime.now()))
+    print(G.get_fastest(0, 13, datetime.now()))
 
 
 print(test_find_route())

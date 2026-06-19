@@ -24,6 +24,11 @@ class RouteNetwork:
             self.edges[start].append((end, time))
             self.edges[end].append((start, time))
 
+    # Определение времени ожидания транспорта (если есть расписание)
+    def schedule_wait_time(self, cur_time, leg_start, leg_end):
+        # если нет раписания - возвращаем default = 0 (например для leg'ов пешкоым)
+        return 0
+
     # АЛГОРИТМ ДЕЙКСТРЫ
     def get_fastest(
             self,
@@ -60,7 +65,11 @@ class RouteNetwork:
             # Считаем расстояния до непосещенных соседей
             for nbr, leg_time in self.edges[cur_node]:
                 if nbr not in visited:
-                    new_dist = dists[cur_node] + leg_time
+                    # Для наземного транспорта добавляем время ожидания ближайшего рейса
+                    mins_enroute = dists[cur_node] # минут в пути
+                    time_on_nbr = cur_time + timedelta(minutes=mins_enroute) # время в которое мы окажемся в этой точке
+                    wait_time = self.schedule_wait_time(time_on_nbr, cur_node, nbr) # время ожидания транспорта
+                    new_dist = mins_enroute + wait_time + leg_time
                     # Если новое время меньше старого - обновляем расстояние и маршрут
                     if new_dist < dists[nbr]:
                         dists[nbr] = new_dist
@@ -90,7 +99,6 @@ class RouteNetwork:
             "total_time_min": total_travel_time,
             "arrival_time": arrival_time
         }
-
 
     # ТУТ ПРОПИСАТЬ ВОЗВРАТНЫЙ ПОИСК В ГЛУБИНУ ВСЕХ ВОЗМОЖНЫХ
     def get_all_routes(self, start, end):
