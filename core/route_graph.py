@@ -20,7 +20,7 @@ class RouteNetwork:
             self.edges[n[0]] = []
         # записываем из файла все рёбра
         for e in data["connections"]:
-            start, end, time = e
+            start, end, time, _ = e
             self.edges[start].append((end, time))
             self.edges[end].append((start, time))
 
@@ -39,7 +39,7 @@ class RouteNetwork:
         if leg_key not in self.schedules:
             return 0
 
-        # берем расписание для нужного дня недели
+        # берем расписание для нужного дня недели. У дубовозок суббота - рабочий
         day_type = "weekday" if cur_time.weekday() < 6 else "weekend"
         schedule_list = self.schedules[leg_key].get(day_type, [])
         if not schedule_list: # если его нет - возвращаем 0
@@ -49,7 +49,6 @@ class RouteNetwork:
         cur_mins = cur_time.hour * 60 + cur_time.minute
 
         # инициализируем время ожидания
-        wait = 0
         for time_str in schedule_list:
             # Строку переводим в минуты для удобного сравнения
             h, m = map(int, time_str.split(':'))
@@ -59,9 +58,10 @@ class RouteNetwork:
             wait = dep_mins - cur_mins
             # Выбираем первый маршрут с неотрицательной дельтой (раписание и так сортированное)
             if wait >= 0:
-                break
+                return wait
 
-        return wait
+        # Если не нашлось рейсов в этот день, то смотрим завтра
+        return float('inf')
 
     # АЛГОРИТМ ДЕЙКСТРЫ
     def get_fastest(
@@ -135,7 +135,7 @@ class RouteNetwork:
         }
 
     # ТУТ ПРОПИСАТЬ ВОЗВРАТНЫЙ ПОИСК В ГЛУБИНУ ВСЕХ ВОЗМОЖНЫХ
-    def get_all_routes(self, start, end, departure_time):
+    def get_all_routes(self, start, end, dep_time):
 
         all_routes = [] # Сюда будем собирать все найденные маршруты
 
@@ -149,18 +149,23 @@ class RouteNetwork:
             # базовый случай: дошли до конечной вершины
             if current == end:
                 # cохраняем копию пути
-                all_routes.append((path.copy(), total_time))
+                all_routes.append((path.copy(), total_time.strftime("%d.%m %H:%M:%S")))
                 return  # возвращаемся, чтобы найти другие маршруты
 
             # перебираем соседей: смотрим все возможные направления из текущей вершины
-            for neighbor, time in self.edges[current]:
+            for neighbor, delta in self.edges[current]:
                 if neighbor not in visited: # проверяем, не были ли уже в этой вершине на текущем пути
                     visited.add(neighbor) # отмечаем вершину как посещенную
                     path.append(neighbor) # добавляем в путь
 
+                    # переводим время в timedelta
+                    delta = timedelta(minutes=delta)
+                    wait_mins = self.schedule_wait_time(total_time, path[-1], neighbor)
+                    wait_time = timedelta(minutes=wait_mins)
+
                     # реккурсивное: идем глубже
                     # передаем total_time + time (добавляем время этого перегона)
-                    dfs(neighbor, visited, path, total_time + time)
+                    dfs(neighbor, visited, path, total_time + wait_time + delta)
 
                     # убираем вершину из пути и посещенных => пробовать другие маршруты
                     path.pop()  # убираем последнюю вершину из пути
@@ -171,6 +176,6 @@ class RouteNetwork:
         path = [start]  # путь начинается со start
 
         # поиск в грубину от начальной вершины
-        dfs(start, visited, path, 0)
+        dfs(start, visited, path, dep_time)
 
         return all_routes # возвращаем все найденные маршруты
