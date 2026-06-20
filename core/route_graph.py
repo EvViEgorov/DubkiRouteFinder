@@ -166,8 +166,10 @@ class RouteNetwork:
             # базовый случай: дошли до конечной вершины
             if current == end:
                 path_names = [self.nodes[pid] for pid in path]
+                # время в пути записываем для удобного сравнения в минутах позже
+                time_enroute = (total_time - dep_time).total_seconds() / 60
                 # cохраняем копию пути
-                all_routes.append((path_names, total_time.strftime("%d.%m %H:%M"), total_street_time))
+                all_routes.append((path_names, time_enroute, total_street_time, total_time.strftime("%d.%m %H:%M")))
                 return  # возвращаемся, чтобы найти другие маршруты
 
             # перебираем соседей: смотрим все возможные направления из текущей вершины
