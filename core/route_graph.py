@@ -31,7 +31,7 @@ class RouteNetwork:
 
         self.schedules = schedule_data
 
-    # определение времени ожидания транспорта (если есть расписание)
+    # определение времени ожидания транспорта (если есть расписание): O(k)
     def schedule_wait_time(self, cur_time, leg_start, leg_end):
         # ключ для поиска по словарям
         leg_key = "-".join([str(leg_start), str(leg_end)])
@@ -94,7 +94,7 @@ class RouteNetwork:
         wait = time_till_midnight + first_tomorrow_mins
         return wait
 
-    # алгоритм Дейкстры
+    # алгоритм Дейкстры: O(V² + E)
     def get_fastest(
             self,
             start,
@@ -109,7 +109,7 @@ class RouteNetwork:
         # пишем родителей каждой вершины
         parents = {node: None for node in self.edges}
 
-        # цикл алгоритма Дейкстры
+        # цикл алгоритма Дейкстры:
         while True:
             # обнуляем текущий узел и расстояние (задаём бесконечность)
             cur_node = None
@@ -165,7 +165,7 @@ class RouteNetwork:
             "arrival_time": arrival_time
         }
 
-    # возвратный поиск в глубину для всех возможных
+    # возвратный поиск в глубину для всех возможных: O(V!) / O(2^V) в худшем случае
     def get_all_routes(self, start, end, dep_time):
 
         all_routes = [] # все найденные маршруты
