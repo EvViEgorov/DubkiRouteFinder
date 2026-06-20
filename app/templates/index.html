@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Нахождение оптимального маршрута Дубки - ВШЭ</title>
+    <style>
+        body {
+            background: #667eea;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .time-hint {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+        .checkbox-group {
+            margin: 15px 0;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Нахождение оптимального маршрута Дубки — ВШЭ</h1>
+
+        <form method="POST" action="/results">
+            <div class="form-group">
+                <label>Откуда (точка А)</label>
+                <select name="from" required>
+                    <option value="">Выберите остановку...</option>
+                    <option value="Дубки">Дубки</option>
+                    <option value="Дубки-остановка">Дубки-остановка</option>
+                    <option value="Одинцово-остановка">Одинцово-остановка</option>
+                    <option value="Одинцово-МЦД">Одинцово-МЦД</option>
+                    <option value="Славянский Бульвар-МЦД">Славянский Бульвар-МЦД</option>
+                    <option value="Славянский Бульвар-остановка">Славянский Бульвар-остановка</option>
+                    <option value="Славянский Бульвар-метро">Славянский Бульвар-метро</option>
+                    <option value="Молодежная-остановка">Молодежная-остановка</option>
+                    <option value="Молодежная-метро">Молодежная-метро</option>
+                    <option value="Курская-метро">Курская-метро</option>
+                    <option value="Курская-МЦД">Курская-МЦД</option>
+                    <option value="Крылатское-метро">Крылатское-метро</option>
+                    <option value="Крылатское-остановка">Крылатское-остановка</option>
+                    <option value="Лесной городок">Лесной городок</option>
+                    <option value="Басмач">Басмач</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Куда (точка Б)</label>
+                <select name="to" required>
+                    <option value="">Выберите остановку...</option>
+                    <option value="Дубки">Дубки</option>
+                    <option value="Дубки-остановка">Дубки-остановка</option>
+                    <option value="Одинцово-остановка">Одинцово-остановка</option>
+                    <option value="Одинцово-МЦД">Одинцово-МЦД</option>
+                    <option value="Славянский Бульвар-МЦД">Славянский Бульвар-МЦД</option>
+                    <option value="Славянский Бульвар-остановка">Славянский Бульвар-остановка</option>
+                    <option value="Славянский Бульвар-метро">Славянский Бульвар-метро</option>
+                    <option value="Молодежная-остановка">Молодежная-остановка</option>
+                    <option value="Молодежная-метро">Молодежная-метро</option>
+                    <option value="Курская-метро">Курская-метро</option>
+                    <option value="Курская-МЦД">Курская-МЦД</option>
+                    <option value="Крылатское-метро">Крылатское-метро</option>
+                    <option value="Крылатское-остановка">Крылатское-остановка</option>
+                    <option value="Лесной городок">Лесной городок</option>
+                    <option value="Басмач">Басмач</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Время отправления</label>
+                <input type="time" name="time">
+                <div class="time-hint">Оставьте пустым для текущего времени</div>
+            </div>
+
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="less_outdoor" value="1">
+                    Хочу меньше времени на улице!
+                </label>
+            </div>
+
+            <button type="submit">Рассчитать оптимальный маршрут</button>
+        </form>
+    </div>
+</body>
+</html>

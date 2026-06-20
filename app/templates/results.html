@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результаты</title>
+    <style>
+        body {
+            background: #667eea;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .result-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        .box-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .route-step {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f9f9f9;
+        }
+        .big-number {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+        }
+        .back-btn {
+            display: block;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Результаты</h1>
+
+        {% if result %}
+        <div class="result-box">
+            <div class="box-title">Оптимальный маршрут</div>
+            {% if result.route %}
+                {% for step in result.route %}
+                <div class="route-step">
+                    {{ step.from }} → {{ step.to }}
+                    {% if step.duration %}({{ step.duration }} мин.){% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>{{ result.from }} → {{ result.to }}</p>
+            {% endif %}
+        </div>
+
+        <div class="result-box">
+            <div class="box-title">Общее время в пути</div>
+            <div class="big-number">{{ result.total_time }} мин.</div>
+        </div>
+
+        <div class="result-box">
+            <div class="box-title">Время на улице</div>
+            <div class="big-number">{{ result.outdoor_time if result.outdoor_time is defined else '—' }} мин.</div>
+        </div>
+        {% endif %}
+
+        <a href="/" class="back-btn">← Новый поиск</a>
+    </div>
+</body>
+</html>

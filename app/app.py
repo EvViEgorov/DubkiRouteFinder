@@ -3,21 +3,17 @@ from flask import Flask, request, render_template
 from core.route_finder import get_nodes
 
 app = Flask(__name__)
-
-@app.route('/data')
+@app.route('/')
 def routes_data():
-    return render_template('graph_info.html')
+    return render_template('index.html')
+@app.route('/results', methods=['POST'])
+def results():
+    from_stop = request.form.get('from')
+    to_stop = request.form.get('to')
+    custom_time = request.form.get('time')
 
-@app.route('/square', methods=['GET'])
-def squarenumber():
-    num = request.args.get('num')
+    departure_time = custom_time if custom_time else "сейчас"
 
-    if num is None:
-        return render_template('squarenum.html')
-    elif num.strip() == '':
-        return "<h1>Invalid number. Please enter a number.</h1>"
-    try:
-        square = get_nodes()
-        return render_template('answer.html', squareofnum=square, num=num)
-    except ValueError:
-        return "<h1>Invalid input. Please enter a valid number.</h1>"
+    result = {"from": from_stop, "to": to_stop, "departure_time": departure_time, "route": []}
+
+    return render_template('results.html', result=result)
