@@ -94,7 +94,7 @@ class RouteNetwork:
         wait = time_till_midnight + first_tomorrow_mins
         return wait
 
-    # алгоритм Дейкстры: O(V² + E)
+    # алгоритм Дейкстры: O(V²)
     def get_fastest(
             self,
             start,
@@ -165,11 +165,10 @@ class RouteNetwork:
             "arrival_time": arrival_time
         }
 
-    # возвратный поиск в глубину для всех возможных: O(V!) / O(2^V) в худшем случае
+    # возвратный поиск в глубину для всех возможных: # O(V!) в худшем случае
     def get_all_routes(self, start, end, dep_time):
 
         all_routes = [] # все найденные маршруты
-
         def dfs(current, visited, path, total_time, total_street_time):
             # поиск в глубину обход графа в глубину
             # current: текущая вершина
