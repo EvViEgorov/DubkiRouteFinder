@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Результаты</title>
+    <title>Маршруты</title>
     <style>
         body {
             background: #667eea;
@@ -11,78 +11,94 @@
             padding: 20px;
         }
         .container {
-            max-width: 500px;
+            max-width: 520px;
             margin: 0 auto;
             background: white;
-            border-radius: 15px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 24px;
         }
         h1 {
-            text-align: center;
+            font-size: 1.2em;
+            margin: 0 0 4px;
         }
-        .result-box {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 8px;
+        .subtitle {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 20px;
         }
-        .box-title {
-            font-weight: bold;
-            margin-bottom: 10px;
+        .error {
+            color: #c0392b;
+            margin-bottom: 16px;
         }
-        .route-step {
-            padding: 8px;
-            margin: 5px 0;
-            background: #f9f9f9;
+        .route {
+            border-top: 1px solid #eee;
+            padding: 14px 0;
         }
-        .big-number {
-            font-size: 2em;
-            font-weight: bold;
-            text-align: center;
+        .route:last-of-type {
+            border-bottom: 1px solid #eee;
         }
-        .back-btn {
-            display: block;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 8px;
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .route-stops {
+            font-size: 0.95em;
+            line-height: 1.7;
+            color: #333;
+        }
+        .route-stops span {
+            display: inline;
+        }
+        .route-stops .arrow {
+            color: #aaa;
+            margin: 0 4px;
+        }
+        .route-footer {
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #666;
+            display: flex;
+            gap: 16px;
+        }
+
+        .no-routes { color: #888; margin: 16px 0; }
+        .back-link {
+            display: inline-block;
             margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Результаты</h1>
+<div class="container">
+    <h1>{{ from_name }} → {{ to_name }}</h1>
+    <p class="subtitle">отправление {{ dep_time_str }}</p>
 
-        {% if result %}
-        <div class="result-box">
-            <div class="box-title">Оптимальный маршрут</div>
-            {% if result.route %}
-                {% for step in result.route %}
-                <div class="route-step">
-                    {{ step.from }} → {{ step.to }}
-                    {% if step.duration %}({{ step.duration }} мин.){% endif %}
-                </div>
+        {% for path_names, time_min, street_time, arrival_str in routes %}
+        <div class="route">
+            <div class="route-header">
+                <span>Маршрут {{ loop.index }}</span>
+                <span>прибытие {{ arrival_str }}</span>
+            </div>
+            <div class="route-stops">
+                {% for stop in path_names %}
+                    <span>{{ stop[1] }}</span>
+                    {% if not loop.last %}<span class="arrow">→</span>{% endif %}
                 {% endfor %}
-            {% else %}
-                <p>{{ result.from }} → {{ result.to }}</p>
-            {% endif %}
+            </div>
+            <div class="route-footer">
+                <span>{{ time_min | int }} мин.</span>
+                <span>{{ street_time }} мин. на улице</span>
+            </div>
         </div>
+        {% endfor %}
 
-        <div class="result-box">
-            <div class="box-title">Общее время в пути</div>
-            <div class="big-number">{{ result.total_time }} мин.</div>
-        </div>
-
-        <div class="result-box">
-            <div class="box-title">Время на улице</div>
-            <div class="big-number">{{ result.outdoor_time if result.outdoor_time is defined else '—' }} мин.</div>
-        </div>
-        {% endif %}
-
-        <a href="/" class="back-btn">← Новый поиск</a>
-    </div>
+    <a href="/" class="back-link">Вернуться к поиску</a>
+</div>
 </body>
 </html>
