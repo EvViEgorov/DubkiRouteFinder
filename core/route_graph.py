@@ -31,7 +31,7 @@ class RouteNetwork:
 
         self.schedules = schedule_data
 
-    # Определение времени ожидания транспорта (если есть расписание)
+    # определение времени ожидания транспорта (если есть расписание)
     def schedule_wait_time(self, cur_time, leg_start, leg_end):
         # ключ для поиска по словарям
         leg_key = "-".join([str(leg_start), str(leg_end)])
@@ -40,7 +40,21 @@ class RouteNetwork:
         if leg_key not in self.schedules:
             return 0
 
-        # берем расписание для нужного дня недели. У дубовозок суббота - рабочий
+        leg_info = self.schedules[leg_key]
+
+        # метро и МЦД ночью не выдаются
+        if leg_info.get("type") in ("metro", "mcd"):
+            cur_mins = cur_time.hour * 60 + cur_time.minute
+            night_start = 1 * 60        # 1:00
+            night_end = 5 * 60 + 30     # 5:30
+
+            # если ночь - возвращаем wait_time до открытия метро
+            if night_start <= cur_mins < night_end:
+                return night_end - cur_mins
+            # рабочее время метро/МЦД - считаем, что ждать не нужно
+            return 0
+
+        # берем расписание для нужного дня недели. у дубовозок суббота - будний день
         day_type = "weekday" if cur_time.weekday() < 6 else "weekend"
         schedule_list = self.schedules[leg_key].get(day_type, [])
         if not schedule_list: # если его нет - возвращаем 0
@@ -51,20 +65,20 @@ class RouteNetwork:
 
         # инициализируем время ожидания
         for time_str in schedule_list:
-            # Строку переводим в минуты для удобного сравнения
+            # строку переводим в минуты для удобного сравнения
             h, m = map(int, time_str.split(':'))
             dep_mins = h * 60 + m
 
-            # Ищем дельту
+            # ищем дельту
             wait = dep_mins - cur_mins
-            # Выбираем первый маршрут с неотрицательной дельтой (расписание и так сортированное)
+            # выбираем первый маршрут с неотрицательной дельтой (расписание и так сортированное)
             if wait >= 0:
                 return wait
 
-        # Если не нашлось рейсов в этот день, то смотрим завтра
+        # если не нашлось рейсов в этот день, то смотрим завтра
         time_till_midnight = 24 * 60 - cur_mins
 
-        # Смотрим завтрашний день недели
+        # смотрим завтрашний день недели
         next_weekday = (cur_time.weekday() + 1) % 7
         next_day_type = "weekday" if next_weekday < 6 else "weekend"
         next_schedule_list = self.schedules[leg_key].get(next_day_type, [])
@@ -80,65 +94,65 @@ class RouteNetwork:
         wait = time_till_midnight + first_tomorrow_mins
         return wait
 
-    # АЛГОРИТМ ДЕЙКСТРЫ
+    # алгоритм Дейкстры
     def get_fastest(
             self,
             start,
             end,
             cur_time: datetime = datetime.now()
     ):
-        # Инициализируем словарь расстояний от start бесконечностями; для вершины start - нулевое расстояние
+        # инициализируем словарь расстояний от start бесконечностями; для вершины start - нулевое расстояние
         dists = {node: float('inf') for node in self.edges}
         dists[start] = 0
-        # Собираем список уже посещённых вершин
+        # собираем список уже посещённых вершин
         visited = set()
-        # Пишем родителей каждой вершины
+        # пишем родителей каждой вершины
         parents = {node: None for node in self.edges}
 
-        # Цикл алгоритма Дейкстры
+        # цикл алгоритма Дейкстры
         while True:
-            # Обнуляем текущий узел и расстояние (задаём бесконечность)
+            # обнуляем текущий узел и расстояние (задаём бесконечность)
             cur_node = None
             cur_min_dist = float('inf')
-            # Линейным поиском (O(n)) делаем текущей вершину с минимальным расстоянием от start
+            # линейным поиском (O(n)) делаем текущей вершину с минимальным расстоянием от start
             for node in self.edges:
                 if node not in visited and dists[node] < cur_min_dist:
                     cur_min_dist = dists[node]
                     cur_node = node
 
-            # Выходим из цикла если достигли целевой вершины или уже посетили все
+            # выходим из цикла если достигли целевой вершины или уже посетили все
             if cur_node is None or cur_node == end:
                 break
 
-            # Помечаем cur_node посещенным
+            # помечаем cur_node посещенным
             visited.add(cur_node)
 
-            # Считаем расстояния до непосещенных соседей
-            for nbr, leg_time in self.edges[cur_node]:
+            # считаем расстояния до непосещенных соседей
+            for nbr, leg_time, street_time in self.edges[cur_node]:
                 if nbr not in visited:
-                    # Для наземного транспорта добавляем время ожидания ближайшего рейса
+                    # для наземного транспорта добавляем время ожидания ближайшего рейса
                     mins_enroute = dists[cur_node] # минут в пути
                     time_on_nbr = cur_time + timedelta(minutes=mins_enroute) # время в которое мы окажемся в этой точке
                     wait_time = self.schedule_wait_time(time_on_nbr, cur_node, nbr) # время ожидания транспорта
                     new_dist = mins_enroute + wait_time + leg_time
-                    # Если новое время меньше старого - обновляем расстояние и маршрут
+                    # если новое время меньше старого - обновляем расстояние и маршрут
                     if new_dist < dists[nbr]:
                         dists[nbr] = new_dist
                         parents[nbr] = cur_node
 
-        # Не нашли маршрута - ничего не возвращаем
+        # не нашли маршрута - ничего не возвращаем
         if dists[end] == float('inf'):
             return None
 
-        # Идем в обратную сторону по родителям и возвращаем маршрут
+        # идем в обратную сторону по родителям и возвращаем маршрут
         path = []
         cur_node = end
         while cur_node is not None: # останавливаемся когда достигнем стартовой вершины
             path.append(cur_node)
             cur_node = parents[cur_node]
-        path.reverse() # разворачиваем назад
+        path.reverse()
 
-        # Пишем маршрут именами
+        # пишем маршрут именами
         id_to_name = {node[0]: node[1] for node in self.nodes}
         path_names = [id_to_name[pid] for pid in path]
 
@@ -151,10 +165,10 @@ class RouteNetwork:
             "arrival_time": arrival_time
         }
 
-    # ТУТ ПРОПИСАТЬ ВОЗВРАТНЫЙ ПОИСК В ГЛУБИНУ ВСЕХ ВОЗМОЖНЫХ
+    # возвратный поиск в глубину для всех возможных
     def get_all_routes(self, start, end, dep_time):
 
-        all_routes = [] # Сюда будем собирать все найденные маршруты
+        all_routes = [] # все найденные маршруты
 
         def dfs(current, visited, path, total_time, total_street_time):
             # поиск в глубину обход графа в глубину
@@ -182,7 +196,7 @@ class RouteNetwork:
                     delta = timedelta(minutes=delta)
                     wait_mins = self.schedule_wait_time(total_time, current, neighbor)
 
-                    # Если путь уже занимает бесконечно времени - не записываем его
+                    # если путь уже занимает бесконечно времени - не записываем его
                     if wait_mins == float('inf'):
                         path.pop()
                         visited.remove(neighbor)
