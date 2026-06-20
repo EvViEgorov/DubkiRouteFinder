@@ -21,9 +21,9 @@ class RouteNetwork:
             self.edges[n[0]] = []
         # записываем из файла все рёбра
         for e in data["connections"]:
-            start, end, time, _ = e
-            self.edges[start].append((end, time))
-            self.edges[end].append((start, time))
+            start, end, time, street_time = e
+            self.edges[start].append((end, time, street_time))
+            self.edges[end].append((start, time, street_time))
 
         # подгружаем расписание
         with open(schedulefile, 'r', encoding='UTF-8') as f:
@@ -156,7 +156,7 @@ class RouteNetwork:
 
         all_routes = [] # Сюда будем собирать все найденные маршруты
 
-        def dfs(current, visited, path, total_time):
+        def dfs(current, visited, path, total_time, total_street_time):
             # поиск в глубину обход графа в глубину
             # current: текущая вершина
             # visited: множество уже посещенных вершин (чтобы не ходить кругами)
@@ -167,11 +167,11 @@ class RouteNetwork:
             if current == end:
                 path_names = [self.nodes[pid] for pid in path]
                 # cохраняем копию пути
-                all_routes.append((path_names, total_time.strftime("%d.%m %H:%M")))
+                all_routes.append((path_names, total_time.strftime("%d.%m %H:%M"), total_street_time))
                 return  # возвращаемся, чтобы найти другие маршруты
 
             # перебираем соседей: смотрим все возможные направления из текущей вершины
-            for neighbor, delta in self.edges[current]:
+            for neighbor, delta, street_time in self.edges[current]:
                 if neighbor not in visited: # проверяем, не были ли уже в этой вершине на текущем пути
                     visited.add(neighbor) # отмечаем вершину как посещенную
                     path.append(neighbor) # добавляем в путь
@@ -189,9 +189,12 @@ class RouteNetwork:
                     wait_time = timedelta(minutes=wait_mins)
                     new_time = total_time + wait_time + delta
 
+                    # увеличиваем общее время на улице
+                    new_total_street_time = total_street_time + street_time
+
                     # реккурсивное: идем глубже
                     # передаем total_time + time (добавляем время этого перегона)
-                    dfs(neighbor, visited, path, new_time)
+                    dfs(neighbor, visited, path, new_time, new_total_street_time)
 
                     # убираем вершину из пути и посещенных => пробовать другие маршруты
                     path.pop()  # убираем последнюю вершину из пути
@@ -202,6 +205,6 @@ class RouteNetwork:
         path = [start]  # путь начинается со start
 
         # поиск в грубину от начальной вершины
-        dfs(start, visited, path, dep_time)
+        dfs(start, visited, path, dep_time, 0)
 
         return all_routes # возвращаем все найденные маршруты
